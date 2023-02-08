@@ -10,7 +10,7 @@ services:
         command: npm run start
         depends_on:
           - db-phones-mongo
-          - db-phones-mysql    
+        #   - db-phones-mysql    
         ports:
             - 1234:1234
         networks:
@@ -25,15 +25,15 @@ services:
         networks:
             - vpn 
 
-    db-phones-mysql:
-        image: mysql
-        ports:
-            - 3306:3306
-        command: --default-authentication-plugin=mysql_native_password
-        restart: always
-        environment:
-            MYSQL_ROOT_PASSWORD: password
-            MYSQL_DATABASE: so-sure
+    # db-phones-mysql:
+    #     image: mysql
+    #     ports:
+    #         - 3306:3306
+    #     command: --default-authentication-plugin=mysql_native_password
+    #     restart: always
+    #     environment:
+    #         MYSQL_ROOT_PASSWORD: password
+    #         MYSQL_DATABASE: so-sure
 
 networks:
     vpn:

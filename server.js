@@ -1,14 +1,25 @@
-require('dotenv').config();
+// Loads the configuration from config.env to process.env
+require('dotenv').config({ path: './config.env' });
+
 const express = require("express");
+const http = require('http');
+const dbo = require('./db/conn');
+
 const app = express();
-const PORT = 1234;
-
 app.use(express.json());
+app.use(require('./routes/api'));
 
-app.get("/", (_, res) => {
-    res.sendFile('views/index.html', {root: __dirname })
-})
+const PORT = 1234;
+app.set('port', PORT);
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server is listening at port ${PORT}`);
-})
+dbo.connectDB((err) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+
+    const server = http.createServer(app);
+    server.listen(PORT, () => {
+      console.log(`Server is running on port: ${PORT}`);
+    });
+});
