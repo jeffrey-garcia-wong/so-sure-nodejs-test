@@ -5,4 +5,5 @@ RUN mkdir -p /src
 WORKDIR /src
 
 COPY . .
-RUN npm i
+RUN npm ci
+CMD npm start
