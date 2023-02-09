@@ -1,9 +1,7 @@
 const express = require('express');
 const path = require('path');
 const apiRoutes = express.Router();
-const dbo = require('../db/conn');
-const { ObjectId } = require("mongodb");
-const { PhoneBuilder } = require('../model/phone');
+const { PhoneRepository } = require('../repo/phone_repo');
 
 apiRoutes.route('/').get((req, res) => {
     res.sendFile('index.html', { root: path.join(__dirname, '../views/') });
@@ -12,8 +10,7 @@ apiRoutes.route('/').get((req, res) => {
 // curl -X GET "http://localhost:1234/phones" -H "content: application/json"
 apiRoutes.route('/phones').get(async(req, res) => {
     try {
-        const dbConnect = dbo.getDb();
-        const result = await dbConnect.collection('phones').find({}).toArray();
+        const result = await PhoneRepository.getAllPhones();
         res.status(200).json(result);
     } catch (err) {
         console.error(err);
@@ -24,9 +21,7 @@ apiRoutes.route('/phones').get(async(req, res) => {
 // curl -i -X GET "http://localhost:1234/phone/63e34f970ebbe20983a9c5e6" -H "content: application/json"
 apiRoutes.route('/phone/:id').get(async(req, res) => {
     try {
-        const dbConnect = dbo.getDb();
-        const query = { _id: new ObjectId(req.params.id) };
-        const result = await dbConnect.collection('phones').findOne(query);
+        const result = await PhoneRepository.getOnePhoneById(req.params.id);
         if (!result) {
             res.status(404).send(`Phone id: ${req.params.id} not found.`);
           } else {
@@ -43,18 +38,7 @@ apiRoutes.route('/phone/:id').get(async(req, res) => {
 // curl -i -X POST "http://localhost:1234/phone" -H "content-type:application/json" -d '{"make":"Samsung","model":"Galaxy S10","storage":"512","monthly_premium":"9.99","yearly_premium":"109.89","excess":"150"}'
 apiRoutes.route('/phone').post(async(req, res) => {
     try {
-        const dbConnect = dbo.getDb();
-        
-        const phoneDocument = PhoneBuilder
-            .make(req.body.make)
-            .model(req.body.model)
-            .storage(req.body.storage)
-            .monthlyPremium(req.body.monthly_premium)
-            .yearlyPremium(req.body.yearly_premium)
-            .excess(req.body.excess)
-            .build();
-
-        const result = await dbConnect.collection('phones').insertOne(phoneDocument);
+        const result = await PhoneRepository.createNewPhone(req.body);
         res.status(200).send(`Added a new phone with id ${result.insertedId}`);
     } catch (err) {
         console.error(err);
@@ -65,9 +49,7 @@ apiRoutes.route('/phone').post(async(req, res) => {
 // curl -i -X DELETE "http://localhost:1234/phone/63e3e3420ebbe20983a9c5e8" -H "content-type: application/json"
 apiRoutes.route('/phone/:id').delete(async(req, res) => {
     try {
-        const dbConnect = dbo.getDb();
-        const query = { _id: new ObjectId(req.params.id) };
-        const result = await dbConnect.collection('phones').deleteOne(query);
+        const result = await PhoneRepository.deletePnePhoneById(req.params.id);
         if (result.deletedCount === 1) {
             res.status(200).send(`Phone id: ${req.params.id} is deleted`);
         } else {
@@ -82,13 +64,7 @@ apiRoutes.route('/phone/:id').delete(async(req, res) => {
 // curl -i -X PATCH "http://localhost:1234/phone" -H "content-type:application/json" -d '{"id":"63e473afb5120b8329d2fd0d","make":"Apple","model":"iPhone 11","storage":"128","monthly_premium":"4.49","yearly_premium":"49.39","excess":"125"}'
 apiRoutes.route('/phone').patch(async(req, res) => {
     try {
-        const dbConnect = dbo.getDb();
-        const filter = { _id: new ObjectId(req.body.id) };
-        const patchData = PhoneBuilder.filterProps(req.body);
-        const updatedPhone = {
-            $set: patchData
-        };
-        const result = await dbConnect.collection('phones').updateOne(filter, updatedPhone);
+        const result = await PhoneRepository.updateOnePhoneById(req.body);
         res.status(200).send(`${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`);
     } catch (err) {
         console.error(err);
